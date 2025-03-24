@@ -111,6 +111,21 @@ router.post("/login", login);
 
 /**
  * @swagger
+ * /api/auth/admin/dashboard:
+ *   get:
+ *     summary: Admin dashboard (Admin Only)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Welcome Admin
+ */
+router.get("/admin/dashboard", verifyToken, isAdmin, (req, res) => {
+    res.json({ message: "Welcome, Admin!" });
+});
+
+/**
+ * @swagger
  * /api/auth/request-reset:
  *   post:
  *     summary: Request password reset

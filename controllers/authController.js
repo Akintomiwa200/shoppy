@@ -1,8 +1,13 @@
-const User = require("../models/userModel");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-require("dotenv").config();
+import User from "../models/userModel.js";
+import sendMail from "../utils/emailService.js"; // ✅ Ensure correct path
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import dotenv from "dotenv";
+
+
+
+dotenv.config();
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -10,9 +15,9 @@ const generateToken = (id) => {
 };
 
 // Signup Controller
-exports.signup = async (req, res) => {
+export const signup = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({ message: "All fields are required" });
@@ -24,20 +29,27 @@ exports.signup = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ name, email, password: hashedPassword });
+        const newUser = new User({ name, email, password: hashedPassword, role });
 
         await newUser.save();
 
-        req.io.emit("userRegistered", { id: newUser._id, name: newUser.name, email: newUser.email });
+        // Send Welcome Email
+        await sendMail(
+            email,
+            "Welcome to PlantStack 🎉",
+            `<h1>Hi ${name},</h1>
+             <p>Welcome to PlantStack! Your account has been successfully created.</p>
+             <p>Login anytime: <a href="https://yourapp.com/login">Login Here</a></p>`
+        );
 
-        res.status(201).json({ message: "User registered successfully", user: { id: newUser._id, name, email } });
+        res.status(201).json({ message: "User registered successfully", user: { id: newUser._id, name, email, role } });
     } catch (error) {
         res.status(500).json({ message: "Error during signup", error: error.message });
     }
 };
 
 // Login Controller
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -55,18 +67,16 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        const token = generateToken(user._id);
+        const token = generateToken(user._id, user.role);
 
-        req.io.emit("userLoggedIn", { email: user.email });
-
-        res.json({ message: "Login successful", token, user: { id: user._id, name: user.name, email: user.email } });
+        res.json({ message: "Login successful", token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
     } catch (error) {
         res.status(500).json({ message: "Error during login", error: error.message });
     }
 };
 
 // Get User Profile (Protected)
-exports.getUserProfile = async (req, res) => {
+export const getUserProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select("-password");
         if (!user) {
@@ -80,12 +90,12 @@ exports.getUserProfile = async (req, res) => {
 };
 
 // Logout (Client-side token removal)
-exports.logout = (req, res) => {
+export const logout = (req, res) => {
     res.json({ message: "Logout successful. Please remove the token from your client storage." });
 };
 
 // Request Password Reset (Generate Reset Token)
-exports.requestPasswordReset = async (req, res) => {
+export const requestPasswordReset = async (req, res) => {
     try {
         const { email } = req.body;
         const user = await User.findOne({ email });
@@ -102,15 +112,26 @@ exports.requestPasswordReset = async (req, res) => {
 
         await user.save();
 
-        // Send email with resetToken (Implement email sending logic here)
-        res.json({ message: "Password reset token generated. Use the token to reset your password.", resetToken });
+        // Send Password Reset Email
+        const resetLink = `https://yourapp.com/reset-password?token=${resetToken}`;
+        await sendMail(
+            email,
+            "Reset Your Password",
+            `<h1>Password Reset Request</h1>
+             <p>You requested a password reset. Click the link below to reset your password:</p>
+             <a href="${resetLink}">${resetLink}</a>
+             <p>If you did not request this, please ignore this email.</p>`
+        );
+
+        res.json({ message: "Password reset email sent. Check your inbox.", resetToken });
     } catch (error) {
         res.status(500).json({ message: "Error processing password reset", error: error.message });
     }
 };
 
+
 // Reset Password
-exports.resetPassword = async (req, res) => {
+export const resetPassword = async (req, res) => {
     try {
         const { resetToken, newPassword } = req.body;
 
@@ -137,7 +158,7 @@ exports.resetPassword = async (req, res) => {
 };
 
 // Middleware: Verify JWT Token
-exports.verifyToken = (req, res, next) => {
+export const verifyToken = (req, res, next) => {
     try {
         const token = req.headers.authorization?.split(" ")[1];
 
@@ -154,7 +175,7 @@ exports.verifyToken = (req, res, next) => {
 };
 
 // Middleware: Check Admin Role
-exports.isAdmin = async (req, res, next) => {
+export const isAdmin = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) {
