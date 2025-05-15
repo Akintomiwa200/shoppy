@@ -1,5 +1,5 @@
-const express = require("express");
-const {
+import express from "express";
+import {
     signup,
     login,
     getUserProfile,
@@ -8,7 +8,7 @@ const {
     resetPassword,
     verifyToken,
     isAdmin
-} = require("../controllers/authController");
+} from "../controllers/authController.js";
 
 const router = express.Router();
 
@@ -199,4 +199,4 @@ router.get("/admin/dashboard", verifyToken, isAdmin, (req, res) => {
     res.json({ message: "Welcome, Admin!" });
 });
 
-module.exports = router;
+export default router;
