@@ -1,7 +1,8 @@
-const Product = require("../models/productModel");
+
+import Product from "../models/productModel.js";
 
 // Get all products with filtering, search, and pagination
-exports.getAllProducts = async (req, res) => {
+export const getAllProducts = async (req, res) => {
     try {
         const { search, minPrice, maxPrice, page = 1, limit = 10 } = req.query;
         const filter = {};
@@ -33,7 +34,7 @@ exports.getAllProducts = async (req, res) => {
 };
 
 // Get a single product by ID
-exports.getProductById = async (req, res) => {
+export const getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
         if (!product) return res.status(404).json({ message: "Product not found" });
@@ -45,7 +46,7 @@ exports.getProductById = async (req, res) => {
 };
 
 // Search products
-exports.searchProducts = async (req, res) => {
+export const searchProducts = async (req, res) => {
     try {
         const { q } = req.query;
         const products = await Product.find({ name: { $regex: q, $options: "i" } });
@@ -57,7 +58,7 @@ exports.searchProducts = async (req, res) => {
 };
 
 // Create a new product
-exports.createProduct = async (req, res) => {
+export const createProduct = async (req, res) => {
     try {
         const { name, price, description, image, stock } = req.body;
         const newProduct = new Product({ name, price, description, image, stock });
@@ -65,7 +66,7 @@ exports.createProduct = async (req, res) => {
         await newProduct.save();
 
         if (req.io) {
-            req.io.emit("productAdded", newProduct); // Real-time update
+            req.io.emit("productAdded", newProduct);
         }
 
         res.status(201).json(newProduct);
@@ -75,7 +76,7 @@ exports.createProduct = async (req, res) => {
 };
 
 // Update a product by ID
-exports.updateProduct = async (req, res) => {
+export const updateProduct = async (req, res) => {
     try {
         const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
@@ -85,7 +86,7 @@ exports.updateProduct = async (req, res) => {
         if (!updatedProduct) return res.status(404).json({ message: "Product not found" });
 
         if (req.io) {
-            req.io.emit("productUpdated", updatedProduct); // Real-time update
+            req.io.emit("productUpdated", updatedProduct);
         }
 
         res.status(200).json(updatedProduct);
@@ -95,14 +96,14 @@ exports.updateProduct = async (req, res) => {
 };
 
 // Delete a product by ID
-exports.deleteProduct = async (req, res) => {
+export const deleteProduct = async (req, res) => {
     try {
         const deletedProduct = await Product.findByIdAndDelete(req.params.id);
 
         if (!deletedProduct) return res.status(404).json({ message: "Product not found" });
 
         if (req.io) {
-            req.io.emit("productDeleted", deletedProduct); // Real-time update
+            req.io.emit("productDeleted", deletedProduct);
         }
 
         res.status(200).json({ message: "Product deleted successfully" });
