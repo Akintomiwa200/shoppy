@@ -1,4 +1,3 @@
-
 import express from "express";
 import cors from "cors";
 import productRoutes from "./routes/productRoutes.js";
@@ -20,4 +19,4 @@ app.use("/api/payments", paymentRoutes);
 // Error Handling Middleware
 app.use(errorHandler);
 
-export { app as default };
+export { app };

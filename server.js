@@ -3,7 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
-import app from "./app.js";
+import { app } from "./app.js";
 import swaggerDocs from "./swagger.js";
 
 dotenv.config();
@@ -42,6 +42,6 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running at http://0.0.0.0:${PORT}`);
 });

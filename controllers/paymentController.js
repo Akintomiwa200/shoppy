@@ -1,8 +1,11 @@
-const Paystack = require("paystack-api")(process.env.PAYSTACK_SECRET);
-const Payment = require("../models/paymentModel"); // Assuming a Payment model exists
+
+import Paystack from "paystack-api";
+import Payment from "../models/paymentModel.js";
+
+const paystackClient = Paystack(process.env.PAYSTACK_SECRET);
 
 // Initiate Payment
-exports.initiatePayment = async (req, res) => {
+export const initiatePayment = async (req, res) => {
     try {
         const { email, amount } = req.body;
 
@@ -10,7 +13,7 @@ exports.initiatePayment = async (req, res) => {
             return res.status(400).json({ message: "Email and amount are required" });
         }
 
-        const response = await Paystack.transaction.initialize({
+        const response = await paystackClient.transaction.initialize({
             email,
             amount: amount * 100, // Convert to kobo
             currency: "NGN"
@@ -23,7 +26,7 @@ exports.initiatePayment = async (req, res) => {
 };
 
 // Verify Payment
-exports.verifyPayment = async (req, res) => {
+export const verifyPayment = async (req, res) => {
     try {
         const { reference } = req.params;
 
@@ -31,13 +34,12 @@ exports.verifyPayment = async (req, res) => {
             return res.status(400).json({ message: "Transaction reference is required" });
         }
 
-        const response = await Paystack.transaction.verify(reference);
+        const response = await paystackClient.transaction.verify(reference);
 
         if (response.data.status === "success") {
-            // Save transaction to database
             await Payment.create({
                 email: response.data.customer.email,
-                amount: response.data.amount / 100, // Convert from kobo
+                amount: response.data.amount / 100,
                 reference: response.data.reference,
                 status: response.data.status
             });
@@ -51,8 +53,8 @@ exports.verifyPayment = async (req, res) => {
     }
 };
 
-// Webhook for Paystack Events (e.g., Payment Successful)
-exports.handleWebhook = async (req, res) => {
+// Webhook Handler
+export const handleWebhook = async (req, res) => {
     try {
         const event = req.body;
 
@@ -62,15 +64,18 @@ exports.handleWebhook = async (req, res) => {
             if (!payment) {
                 await Payment.create({
                     email: event.data.customer.email,
-                    amount: event.data.amount / 100, // Convert from kobo
+                    amount: event.data.amount / 100,
                     reference: event.data.reference,
                     status: event.data.status
                 });
             } else {
-                await Payment.findOneAndUpdate({ reference: event.data.reference }, { status: event.data.status });
+                await Payment.findOneAndUpdate(
+                    { reference: event.data.reference },
+                    { status: event.data.status }
+                );
             }
 
-            return res.status(200).json({ message: "Webhook received and processed successfully" });
+            return res.status(200).json({ message: "Webhook processed successfully" });
         }
 
         res.status(400).json({ message: "Unhandled event type" });
@@ -79,11 +84,10 @@ exports.handleWebhook = async (req, res) => {
     }
 };
 
-// Retrieve a single transaction by reference
-exports.getTransaction = async (req, res) => {
+// Get Transaction
+export const getTransaction = async (req, res) => {
     try {
         const { reference } = req.params;
-
         const transaction = await Payment.findOne({ reference });
 
         if (!transaction) {
@@ -96,8 +100,8 @@ exports.getTransaction = async (req, res) => {
     }
 };
 
-// List all transactions with pagination and filtering
-exports.getAllTransactions = async (req, res) => {
+// Get All Transactions
+export const getAllTransactions = async (req, res) => {
     try {
         const { page = 1, limit = 10, status, email } = req.query;
         const filter = {};
