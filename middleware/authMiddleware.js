@@ -1,34 +1,32 @@
-const jwt = require("jsonwebtoken");
 
-/**
- * Middleware to verify JWT token from request headers
- */
-const verifyToken = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ message: "Unauthorized - No Token Provided" });
-    }
+import jwt from "jsonwebtoken";
+import User from "../models/userModel.js";
 
-    const token = authHeader.split(" ")[1];
-
+export const verifyToken = (req, res, next) => {
     try {
+        const token = req.headers.authorization?.split(" ")[1];
+        if (!token) {
+            return res.status(401).json({ message: "No token, authorization denied" });
+        }
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded; // Attach user payload to request
+        req.user = decoded;
         next();
     } catch (error) {
-        return res.status(403).json({ message: "Forbidden - Invalid Token" });
+        res.status(401).json({ message: "Invalid token" });
     }
 };
 
-/**
- * Middleware to check if the user is an Admin
- */
-const isAdmin = (req, res, next) => {
-    if (!req.user || req.user.role !== "admin") {
-        return res.status(403).json({ message: "Forbidden - Admin Access Required" });
+export const isAdmin = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        if (user.role !== "admin") {
+            return res.status(403).json({ message: "Access denied. Admins only." });
+        }
+        next();
+    } catch (error) {
+        res.status(500).json({ message: "Authorization error", error: error.message });
     }
-    next();
 };
-
-module.exports = { verifyToken, isAdmin };

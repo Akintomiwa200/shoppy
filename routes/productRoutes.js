@@ -1,14 +1,13 @@
-const express = require("express");
-const {
+import express from "express";
+import {
     getAllProducts,
     getProductById,
     createProduct,
     updateProduct,
     deleteProduct,
     searchProducts
-} = require("../controllers/productController");
-
-const { verifyToken, isAdmin } = require("../middleware/authMiddleware");
+} from "../controllers/productController.js";
+import { verifyToken, isAdmin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -20,7 +19,7 @@ const router = express.Router();
  *       type: http
  *       scheme: bearer
  *       bearerFormat: JWT
- *   
+ *
  *   schemas:
  *     Product:
  *       type: object
@@ -149,7 +148,7 @@ router.get("/:id", getProductById);
  *       201:
  *         description: Product created successfully
  */
-router.post("/", verifyToken, isAdmin, createProduct);
+router.post("/", [verifyToken, isAdmin], createProduct);
 
 /**
  * @swagger
@@ -175,7 +174,7 @@ router.post("/", verifyToken, isAdmin, createProduct);
  *       200:
  *         description: Product updated successfully
  */
-router.put("/:id", verifyToken, isAdmin, updateProduct);
+router.put("/:id", [verifyToken, isAdmin], updateProduct);
 
 /**
  * @swagger
@@ -195,6 +194,6 @@ router.put("/:id", verifyToken, isAdmin, updateProduct);
  *       200:
  *         description: Product deleted successfully
  */
-router.delete("/:id", verifyToken, isAdmin, deleteProduct);
+router.delete("/:id", [verifyToken, isAdmin], deleteProduct);
 
-module.exports = router;
+export default router;

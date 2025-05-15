@@ -1,9 +1,10 @@
-const express = require("express");
-const cors = require("cors");
-const productRoutes = require("./routes/productRoutes");
-const authRoutes = require("./routes/authRoutes");
-const paymentRoutes = require("./routes/paymentRoutes");
-const errorHandler = require("./middleware/errorMiddleware");
+
+import express from "express";
+import cors from "cors";
+import productRoutes from "./routes/productRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
+import errorHandler from "./middleware/errorMiddleware.js";
 
 const app = express();
 
@@ -19,4 +20,4 @@ app.use("/api/payments", paymentRoutes);
 // Error Handling Middleware
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

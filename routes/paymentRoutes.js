@@ -1,13 +1,12 @@
-const express = require("express");
-const {
+import express from "express";
+import {
     initiatePayment,
     verifyPayment,
     getTransaction,
     getAllTransactions,
     handleWebhook
-} = require("../controllers/paymentController");
-
-const { verifyToken } = require("../middleware/authMiddleware");
+} from "../controllers/paymentController.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -160,4 +159,4 @@ router.get("/transactions", verifyToken, getAllTransactions);
  */
 router.post("/webhook", handleWebhook);
 
-module.exports = router;
+export default router;
