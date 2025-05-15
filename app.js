@@ -20,4 +20,4 @@ app.use("/api/payments", paymentRoutes);
 // Error Handling Middleware
 app.use(errorHandler);
 
-export default app;
+export { app as default };
