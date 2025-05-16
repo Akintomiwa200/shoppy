@@ -1,0 +1,85 @@
+import React, { useState, useEffect } from 'react';
+import ProductList from './ProductList';
+import ProductModal from '../modal/ProductModal';
+
+const ProductTemplate = () => {
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    // Hardcoded API details
+    const organizationId = 'cc1fd1c5b89f4d58a57f0696d6794c3d';
+    const appId = '362YX3XEOKRR8TI';
+    const apiKey = 'd9fde949791f45a99f75a2a68a97b97d20240712181346958569';
+
+    const fetchAllProducts = async () => {
+        setLoading(true);
+        try {
+            
+            
+            
+            
+            const url = new URL('https://shoppy-pzzi.onrender.com/');
+           
+            //const url = new URL('https://shoppy-pzzi.onrender.com/');
+            url.searchParams.append('organization_id', organizationId);
+            url.searchParams.append('Appid', appId);
+            url.searchParams.append('Apikey', apiKey);
+            url.searchParams.append('page', 1);
+            url.searchParams.append('size', 1000); // Set a high number to fetch all products
+
+            const response = await fetch(url.toString());
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            if (data && Array.isArray(data.items) && data.items.length > 0) {
+                const newProducts = data.items.map((item, index) => ({
+                    ...item,
+                    key: `${item.id}-${index}`, // Combine id and index to ensure unique keys
+                }));
+                setProducts(newProducts);
+            }
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchAllProducts();
+    }, []);
+
+    const handleProductClick = (product) => {
+        setSelectedProduct(product);
+        setModalOpen(true);
+    };
+
+    return (
+        <div className="container flex flex-col justify-center items-center">
+            <div className='flex items-start justify-start text-left w-[80em]'>
+                <h1 className="text-4xl font-bold my-8">Popular Products</h1>
+            </div>
+
+            {loading ? (
+                <div className="text-xl font-bold">Loading...</div>
+            ) : (
+                <ProductList
+                    products={products}
+                    handleProductClick={handleProductClick}
+                />
+            )}
+
+            {modalOpen && (
+                <ProductModal
+                    product={selectedProduct}
+                    setModalOpen={setModalOpen}
+                />
+            )}
+        </div>
+    );
+};
+
+export default ProductTemplate;
